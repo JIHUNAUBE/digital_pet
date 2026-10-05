@@ -15,8 +15,9 @@ class MyApp extends StatelessWidget {
       title: 'Digital Pet',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: Colors.deepPurple,
         ),
+        useMaterial3: true,
       ),
       home: const DigitalPetPage(),
     );
@@ -31,168 +32,98 @@ class DigitalPetPage extends StatefulWidget {
 }
 
 class _DigitalPetPageState extends State<DigitalPetPage> {
-  // -------------------------
-  // PET STATE
-  // -------------------------
+  // ----------------------------
+  // TEAM 1 - CARE SYSTEM
+  // ----------------------------
 
-  String _petName = 'Pip';
-
-  int _happiness = 50;
-  int _hunger = 50;
+  double _happiness = 50;
+  double _hunger = 50;
 
   bool _gameOver = false;
   bool _hasWon = false;
 
   Timer? _hungerTimer;
-  Timer? _highMoodTimer;
-
-  // -------------------------
-  // INITIALIZE
-  // -------------------------
 
   @override
   void initState() {
     super.initState();
-
     _startHungerTimer();
   }
 
-  // -------------------------
-  // KEEP VALUES 0 - 100
-  // -------------------------
-
-  int _clampMeter(int value) {
-    return value.clamp(0, 100).toInt();
+  @override
+  void dispose() {
+    _hungerTimer?.cancel();
+    super.dispose();
   }
 
-  // -------------------------
-  // FEED PET
-  // -------------------------
-
-  void _feedPet() {
-    if (_gameOver || _hasWon) return;
-
-    final nextHunger = _clampMeter(_hunger - 10);
-
-    final happinessChange =
-        nextHunger < 30 ? -20 : 10;
-
-    final nextHappiness =
-        _clampMeter(_happiness + happinessChange);
-
-    setState(() {
-      _hunger = nextHunger;
-      _happiness = nextHappiness;
-    });
-
-    _updateOutcome();
-  }
-
-  // -------------------------
-  // PLAY WITH PET
-  // -------------------------
-
-  void _playPet() {
-    if (_gameOver || _hasWon) return;
-
-    setState(() {
-      _happiness = _clampMeter(_happiness + 10);
-      _hunger = _clampMeter(_hunger + 5);
-    });
-
-    _updateOutcome();
-  }
-
-  // -------------------------
-  // HUNGER TIMER
-  // -------------------------
-
+  // Hunger increases every 30 seconds.
   void _startHungerTimer() {
-    _hungerTimer?.cancel();
-
-    _hungerTimer =
-        Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (!mounted || _gameOver || _hasWon) {
-        timer.cancel();
-        return;
-      }
-
-      setState(() {
-        // PDF rule:
-        // 95 -> 100 does NOT reduce happiness.
-        // The NEXT tick while already at 100
-        // reduces happiness by 20.
-        if (_hunger + 5 > 100) {
-          _hunger = 100;
-          _happiness =
-              _clampMeter(_happiness - 20);
-        } else {
-          _hunger += 5;
+    _hungerTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (timer) {
+        if (_gameOver || _hasWon) {
+          return;
         }
-      });
 
-      _updateOutcome();
-    });
+        setState(() {
+          _hunger += 5;
+
+          if (_hunger > 100) {
+            _hunger = 100;
+          }
+
+          _checkGameStatus();
+        });
+      },
+    );
   }
 
-  // -------------------------
-  // WIN / GAME OVER
-  // -------------------------
-
-  void _updateOutcome() {
-    if (_gameOver || _hasWon) return;
-
-    // GAME OVER
-    if (_hunger == 100 && _happiness <= 10) {
-      _highMoodTimer?.cancel();
-      _highMoodTimer = null;
-
-      _hungerTimer?.cancel();
-
-      setState(() {
-        _gameOver = true;
-      });
-
+  // Feed the pet.
+  void _feedPet() {
+    if (_gameOver || _hasWon) {
       return;
     }
 
-    // Happiness 80 or below:
-    // cancel the win timer.
-    if (_happiness <= 80) {
-      _highMoodTimer?.cancel();
-      _highMoodTimer = null;
-      return;
-    }
+    setState(() {
+      _hunger -= 15;
+      _happiness += 5;
 
-    // Happiness is above 80.
-    // Start timer only if one is not already running.
-    _highMoodTimer ??=
-        Timer(const Duration(minutes: 3), () {
-      _highMoodTimer = null;
-
-      if (!mounted ||
-          _gameOver ||
-          _happiness <= 80) {
-        return;
+      if (_hunger < 0) {
+        _hunger = 0;
       }
 
-      setState(() {
-        _hasWon = true;
-      });
+      if (_happiness > 100) {
+        _happiness = 100;
+      }
 
-      _hungerTimer?.cancel();
+      _checkGameStatus();
     });
   }
 
-  // -------------------------
-  // RESET GAME
-  // -------------------------
+  // Play with the pet.
+  void _playPet() {
+    if (_gameOver || _hasWon) {
+      return;
+    }
 
+    setState(() {
+      _happiness += 15;
+      _hunger += 5;
+
+      if (_happiness > 100) {
+        _happiness = 100;
+      }
+
+      if (_hunger > 100) {
+        _hunger = 100;
+      }
+
+      _checkGameStatus();
+    });
+  }
+
+  // Reset the game.
   void _resetGame() {
-    _hungerTimer?.cancel();
-    _highMoodTimer?.cancel();
-    _highMoodTimer = null;
-
     setState(() {
       _happiness = 50;
       _hunger = 50;
@@ -200,33 +131,81 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
       _gameOver = false;
       _hasWon = false;
     });
-
-    _startHungerTimer();
   }
 
-  // -------------------------
-  // CLEAN UP TIMERS
-  // -------------------------
+  // Check win and game over conditions.
+  void _checkGameStatus() {
+    if (_hunger >= 100 || _happiness <= 0) {
+      _gameOver = true;
+    }
 
-  @override
-  void dispose() {
-    _hungerTimer?.cancel();
-    _highMoodTimer?.cancel();
-
-    super.dispose();
+    if (_happiness >= 100 && _hunger <= 30) {
+      _hasWon = true;
+    }
   }
 
-  // -------------------------
-  // SCREEN
-  // -------------------------
+  // ----------------------------
+  // TEAM 2 - PET REACTION SYSTEM
+  // ----------------------------
+
+  String get _petMessage {
+    if (_gameOver) {
+      return 'I did my best... I am sorry...';
+    }
+
+    if (_hasWon) {
+      return 'We did it! You really are amazing!';
+    }
+
+    if (_hunger > 80) {
+      return 'Hmmm do you think it would be okay if I eat something?';
+    }
+
+    if (_happiness <= 30) {
+      return 'Hey! Hey! Spend time with me!';
+    }
+
+    return "Hehe, I'm so happy to see you! You make me so happy!";
+  }
+
+  Color get _moodColor {
+    if (_happiness > 70) {
+      return Colors.green;
+    }
+
+    if (_happiness >= 30) {
+      return Colors.amber;
+    }
+
+    return Colors.red;
+  }
+
+  double get _petScale {
+    if (_happiness > 70) {
+      return 1.06;
+    }
+
+    if (_happiness < 30) {
+      return 0.94;
+    }
+
+    return 1.0;
+  }
+
+  // ----------------------------
+  // USER INTERFACE
+  // ----------------------------
 
   @override
   Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.of(context).disableAnimations;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Digital Pet'),
-        backgroundColor:
-            Theme.of(context).colorScheme.inversePrimary,
+        centerTitle: true,
+        backgroundColor: Colors.blue.shade200,
       ),
 
       body: Center(
@@ -234,60 +213,171 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
 
-            // PET NAME
-            Text(
-              _petName,
-              style: const TextStyle(
+            // Pet name
+            const Text(
+              'Pip',
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 25),
 
-            // HAPPINESS
-            Text(
-              'Happiness: $_happiness',
-              style: const TextStyle(fontSize: 20),
-            ),
+            // ----------------------------
+            // PET
+            // ----------------------------
 
-            const SizedBox(height: 10),
+            AnimatedScale(
+              scale: _petScale,
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
+              curve: Curves.easeOutBack,
 
-            // HUNGER
-            Text(
-              'Hunger: $_hunger',
-              style: const TextStyle(fontSize: 20),
-            ),
+              child: AnimatedContainer(
+                duration: reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 300),
 
-            const SizedBox(height: 30),
+                width: 120,
+                height: 120,
 
-            // RESULT MESSAGE
-            if (_hasWon)
-              const Text(
-                'You Win!',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                decoration: BoxDecoration(
+                  color: _moodColor.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _moodColor,
+                    width: 4,
+                  ),
+                ),
+
+                child: Icon(
+                  Icons.pets,
+                  size: 65,
+                  color: _moodColor,
                 ),
               ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // ----------------------------
+            // PET MESSAGE
+            // ----------------------------
+
+            AnimatedSwitcher(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 300),
+
+              child: Text(
+                _petMessage,
+                key: ValueKey(_petMessage),
+                textAlign: TextAlign.center,
+
+                style: const TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ----------------------------
+            // HAPPINESS
+            // ----------------------------
+
+            Text(
+              'Happiness: ${_happiness.toInt()}',
+              style: const TextStyle(
+                fontSize: 18,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            SizedBox(
+              width: 250,
+
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(
+                  begin: 0,
+                  end: _happiness / 100,
+                ),
+
+                duration: reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 400),
+
+                curve: Curves.easeOut,
+
+                builder: (context, value, child) {
+                  return LinearProgressIndicator(
+                    value: value,
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ----------------------------
+            // HUNGER
+            // ----------------------------
+
+            Text(
+              'Hunger: ${_hunger.toInt()}',
+              style: const TextStyle(
+                fontSize: 18,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            SizedBox(
+              width: 250,
+
+              child: LinearProgressIndicator(
+                value: _hunger / 100,
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ----------------------------
+            // GAME STATUS
+            // ----------------------------
 
             if (_gameOver)
               const Text(
-                'Game Over',
+                'GAME OVER',
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.red,
                 ),
               ),
 
-            const SizedBox(height: 30),
+            if (_hasWon)
+              const Text(
+                'YOU WIN!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
 
-            // ACTION BUTTONS
+            if (_gameOver || _hasWon)
+              const SizedBox(height: 20),
+
+            // ----------------------------
+            // BUTTONS
+            // ----------------------------
+
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
 
                 ElevatedButton(
@@ -295,6 +385,7 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
                       (_gameOver || _hasWon)
                           ? null
                           : _feedPet,
+
                   child: const Text('Feed'),
                 ),
 
@@ -305,6 +396,7 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
                       (_gameOver || _hasWon)
                           ? null
                           : _playPet,
+
                   child: const Text('Play'),
                 ),
 
