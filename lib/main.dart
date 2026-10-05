@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -168,17 +169,7 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
     return "Hehe, I'm so happy to see you! You make me so happy!";
   }
 
-  Color get _moodColor {
-    if (_happiness > 70) {
-      return Colors.green;
-    }
-
-    if (_happiness >= 30) {
-      return Colors.amber;
-    }
-
-    return Colors.red;
-  }
+  
 
   double get _petScale {
     if (_happiness > 70) {
@@ -240,22 +231,12 @@ class _DigitalPetPageState extends State<DigitalPetPage> {
                     ? Duration.zero
                     : const Duration(milliseconds: 300),
 
-                width: 120,
-                height: 120,
+                width: 180,
+                height: 180,
 
-                decoration: BoxDecoration(
-                  color: _moodColor.withValues(alpha: 0.25),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _moodColor,
-                    width: 4,
-                  ),
-                ),
-
-                child: Icon(
-                  Icons.pets,
-                  size: 65,
-                  color: _moodColor,
+                child: Image.asset(
+                  'assets/pet.png',
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
