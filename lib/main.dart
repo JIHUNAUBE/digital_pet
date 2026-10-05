@@ -19,17 +19,17 @@ class MyApp extends StatelessWidget {
 
     String petMessage;
     if (gameOver) {
-      petMessage = 'I need a rest.';
+      petMessage = 'I did my best... I am sorry...';
     } else if (hasWon) {
-      petMessage = 'Best day ever!';
+      petMessage = 'We did it! You really are amazing!';
     } else if (hunger > 80) {
-      petMessage = "I'm starving!";
+      petMessage = "Hmmm do you think it would be okay if I eat something?";
     } else if (happiness <= 30) {
-      petMessage = 'Play with me?';
+      petMessage = 'Hey! Hey! Spend time with me!';
     } else if (energy < 20) {
-      petMessage = 'So sleepy...';
+      petMessage = '...mmm I will try to stay up...I want to keep spending time with you.';
     } else {
-      petMessage = "Hi, I'm $petName!";
+      petMessage = "Hehe, I'm so happy to see you! You make me so happy!";
     }
 
     final petScale =
