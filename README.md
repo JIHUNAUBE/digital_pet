@@ -5,8 +5,8 @@ The app allows users to interact with a virtual pet by feeding, playing, and res
 
 ## Team Members
 
-- Jihun Kim
-- C Nguyen
+- Jihun Kim (worked on team 1 parts)
+- Cassie Nguyen (worked on team 2 parts)
 
 ## Features
 
